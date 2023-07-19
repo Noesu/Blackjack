@@ -38,6 +38,9 @@ class BJ_Deck(cards.Deck):
             for rank in BJ_Card.RANKS:
                 self.cards.append(BJ_Card(rank, suit))
 
+    def cards_left(self):
+        return len(self.cards)
+
 
 class BJ_Hand(cards.Hand):
     """ A Blackjack Hand. """
@@ -148,10 +151,17 @@ class BJ_Game(object):
 
     def play(self):
         # deal initial 2 cards to everyone
-        self.deck.deal(self.players + [self.dealer], per_hand=2)
+        if self.deck.cards_left() < 45:
+            print("Low cards")
+            input("Shuffling...")
+            self.cards = []
+            self.deck.populate()
+            self.deck.shuffle()
+
         self.dealer.flip_first_card()  # hide dealer's first card
         for player in self.players:
             print(player)
+        print(self.dealer)
         print(self.dealer)
 
         # deal additional cards to players
