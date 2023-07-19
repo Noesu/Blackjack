@@ -150,18 +150,18 @@ class BJ_Game(object):
                 player.bust()
 
     def play(self):
-        # deal initial 2 cards to everyone
+        # Check cards in deck, reshuffle if needed
         if self.deck.cards_left() < 45:
             print("Low cards")
             input("Shuffling...")
             self.cards = []
             self.deck.populate()
             self.deck.shuffle()
-
+        # deal initial 2 cards to everyone
+        self.deck.deal(self.players + [self.dealer], per_hand=2)
         self.dealer.flip_first_card()  # hide dealer's first card
         for player in self.players:
             print(player)
-        print(self.dealer)
         print(self.dealer)
 
         # deal additional cards to players
