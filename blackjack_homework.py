@@ -38,16 +38,24 @@ class BJ_Deck(cards.Deck):
             for rank in BJ_Card.RANKS:
                 self.cards.append(BJ_Card(rank, suit))
 
+    def cards_left(self):
+        return len(self.cards)
+
 
 class BJ_Hand(cards.Hand):
     """ A Blackjack Hand. """
 
-    def __init__(self, name):
+    def __init__(self, name, cash=1000, bet=0):
         super(BJ_Hand, self).__init__()
         self.name = name
+        self.cash = cash
+        self.bet = bet
 
     def __str__(self):
-        rep = self.name + ":\t" + super(BJ_Hand, self).__str__()
+        rep = self.name
+        if self.name != "Dealer":
+            rep += " (" + str(self.cash) + "$) "
+        rep += ":\t" + super(BJ_Hand, self).__str__()
         if self.total:
             rep += "(" + str(self.total) + ")"
         return rep
@@ -89,17 +97,31 @@ class BJ_Player(BJ_Hand):
         return response == "y"
 
     def bust(self):
-        print(self.name, "busts.")
+        print(self.name, "busts.", end=" ")
         self.lose()
 
     def lose(self):
-        print(self.name, "loses.")
+        print(self.name, "loses. You lost your bet.", end=" ")
+        print("You have now ($):", self.cash)
+        self.bet = 0
 
     def win(self):
-        print(self.name, "wins.")
+        print(self.name, "wins. You win ($)", self.bet, end=" ")
+        self.cash += 2*self.bet
+        print("You have now ($):", self.cash)
+        self.bet = 0
 
     def push(self):
-        print(self.name, "pushes.")
+        self.cash += self.bet
+        print(self.name, "pushes. You have your bet ($)", self.bet, "back. You have now ($):", self.cash)
+        self.bet = 0
+
+    def bet(self):
+        while self.bet not in range(1, self.cash+1):
+            print("\nPlayer", self.name, "your credits is ($):", self.cash, end="")
+            self.bet = int(input(".\tPlace your bet ($): "))
+        print("Player", self.name, "Your bet ($):", self.bet, "is accepted.")
+        self.cash -= self.bet
 
 
 class BJ_Dealer(BJ_Hand):
@@ -125,8 +147,7 @@ class BJ_Game(object):
             player = BJ_Player(name)
             self.players.append(player)
 
-        self.dealer = BJ_Dealer("Dealer")
-
+        self.dealer = BJ_Dealer("Dealer", 1000000)
         self.deck = BJ_Deck()
         self.deck.populate()
         self.deck.shuffle()
@@ -146,10 +167,33 @@ class BJ_Game(object):
             if player.is_busted():
                 player.bust()
 
+    def check_cash(self):
+        for player in self.players:
+            if player.cash == 0:
+                print("Player {} has no more credits. The game is over for him!".format(player.name))
+                self.players.remove(player)
+                if len(self.players) == 0:
+                    print("\n"*50)
+                    main()
+
     def play(self):
+        self.check_cash()
+        # Check cards in deck, reshuffle if needed
+        if self.deck.cards_left() < 20:
+            print("Low cards")
+            input("Shuffling...")
+            self.cards = []
+            self.deck.populate()
+            self.deck.shuffle()
+
+        # players making bets
+        for player in self.players:
+            BJ_Player.bet(player)
+
         # deal initial 2 cards to everyone
         self.deck.deal(self.players + [self.dealer], per_hand=2)
         self.dealer.flip_first_card()  # hide dealer's first card
+        print("\nDealing cards...")
         for player in self.players:
             print(player)
         print(self.dealer)
@@ -196,7 +240,6 @@ def main():
     for i in range(number):
         name = input("Enter player name: ")
         names.append(name)
-    print()
 
     game = BJ_Game(names)
 
@@ -208,6 +251,3 @@ def main():
 
 main()
 input("\n\nPress the enter key to exit.")
-
-
-
